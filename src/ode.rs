@@ -1,10 +1,11 @@
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::marker::PhantomData;
+use std::time::Instant;
 
 use crate::state::{Real, State};
 
-pub trait ODE<T, V>
+pub trait ODE<T = f64, V = f64>
 where
     T: Real,
     V: State<T>,
@@ -27,8 +28,9 @@ where
     T: Real,
     V: State<T>,
 {
-    y: Vec<V>,
-    t: Vec<f64>,
+    pub y: Vec<V>,
+    pub t: Vec<f64>,
+    duration_s: Option<f64>,
     _phantom: PhantomData<T>,
 }
 
@@ -42,6 +44,7 @@ where
             y: Vec::<V>::new(),
             t: Vec::<f64>::new(),
             _phantom: PhantomData,
+            duration_s: None,
         }
     }
 
@@ -60,6 +63,10 @@ where
 
         Ok(())
     }
+
+    pub fn get_solution_duration(&self) -> Option<f64> {
+        self.duration_s
+    }
 }
 
 pub fn solve<T, V, O, S>(y0: V, t0: f64, final_t: f64, mut solver: S) -> ODESolution<T, V>
@@ -77,11 +84,18 @@ where
 
     let mut stopping_flag = false;
 
+    let start = Instant::now();
+
     while !stopping_flag {
         solver.step(&mut y, &mut t);
         solution.push(&y, &t);
 
         stopping_flag = !(t < final_t)
     }
+
+    let end = Instant::now();
+    let duration = end.duration_since(start).as_secs_f64();
+    solution.duration_s = Some(duration);
+
     solution
 }

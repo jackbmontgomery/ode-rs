@@ -37,22 +37,27 @@ where
         }
     }
     fn step(&mut self, y: &mut V, t: &mut f64) {
-        self.ode.rhs(y, *t, &mut self.k1);
-
         let dt_t = T::from_f64(self.dt).unwrap();
         let half_t = T::from_f64(1. / 2.).unwrap();
         let sixth_t = T::from_f64(1. / 6.).unwrap();
+        let two = T::from_f64(2.).unwrap();
+
+        self.ode.rhs(y, *t, &mut self.k1);
+        println!("{:?}", self.k1);
 
         self.y_temp = *y + self.k1 * dt_t * half_t;
         self.ode.rhs(&self.y_temp, *t + self.dt / 2., &mut self.k2);
+        println!("{:?}", self.k2);
 
         self.y_temp = *y + self.k2 * dt_t * half_t;
         self.ode.rhs(&self.y_temp, *t + self.dt / 2., &mut self.k3);
+        println!("{:?}", self.k3);
 
         self.y_temp = *y + self.k3 * dt_t;
         self.ode.rhs(&self.y_temp, *t + self.dt, &mut self.k4);
+        println!("{:?}", self.k4);
 
-        *y += (self.k1 + self.k2 + self.k3 + self.k4) * dt_t * sixth_t;
+        *y += (self.k1 + self.k2 * two + self.k3 * two + self.k4) * dt_t * sixth_t;
         *t += self.dt;
     }
 }
