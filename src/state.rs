@@ -1,6 +1,6 @@
 use nalgebra::{RealField, SMatrix};
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Display},
     ops::{Add, AddAssign, Div, Mul, Sub},
 };
 
@@ -24,6 +24,7 @@ pub trait State<T>:
     Clone
     + Copy
     + Debug
+    + Display
     + Add<Output = Self>
     + Sub<Output = Self>
     + AddAssign
@@ -31,8 +32,8 @@ pub trait State<T>:
     + Div<T, Output = Self>
 {
     fn len(&self) -> usize;
-
     fn zeros() -> Self;
+    fn flat(&self) -> String;
 }
 
 impl<T: Real> State<T> for T {
@@ -42,6 +43,10 @@ impl<T: Real> State<T> for T {
 
     fn zeros() -> Self {
         T::zero()
+    }
+
+    fn flat(&self) -> String {
+        self.to_string()
     }
 }
 
@@ -55,5 +60,13 @@ where
 
     fn zeros() -> Self {
         SMatrix::<T, R, C>::zeros()
+    }
+
+    fn flat(&self) -> String {
+        self.as_slice()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
     }
 }
