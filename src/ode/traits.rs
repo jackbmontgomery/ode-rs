@@ -1,9 +1,8 @@
+use crate::state::{Real, State};
+use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::marker::PhantomData;
-use std::time::Instant;
-
-use crate::state::{Real, State};
 
 pub trait ODE<T = f64, V = f64>
 where
@@ -23,14 +22,15 @@ where
     fn step(&mut self, y: &mut V, t: &mut f64);
 }
 
+#[derive(Debug)]
 pub struct ODESolution<T, V>
 where
     T: Real,
-    V: State<T>,
+    V: State<T> + Debug,
 {
     pub y: Vec<V>,
     pub t: Vec<f64>,
-    duration_s: Option<f64>,
+    pub duration_s: Option<f64>,
     _phantom: PhantomData<T>,
 }
 
@@ -39,7 +39,7 @@ where
     T: Real,
     V: State<T>,
 {
-    fn new() -> Self {
+    pub fn new() -> Self {
         ODESolution {
             y: Vec::<V>::new(),
             t: Vec::<f64>::new(),
@@ -48,7 +48,7 @@ where
         }
     }
 
-    fn push(&mut self, y: &V, t: &f64) {
+    pub fn push(&mut self, y: &V, t: &f64) {
         self.y.push(*y);
         self.t.push(*t);
     }
@@ -63,39 +63,4 @@ where
 
         Ok(())
     }
-
-    pub fn get_solution_duration(&self) -> Option<f64> {
-        self.duration_s
-    }
-}
-
-pub fn solve<T, V, O, S>(y0: V, t0: f64, final_t: f64, mut solver: S) -> ODESolution<T, V>
-where
-    T: Real,
-    V: State<T>,
-    O: ODE<T, V>,
-    S: ODESolver<T, V, O>,
-{
-    let mut solution = ODESolution::new();
-    solution.push(&y0, &t0);
-
-    let mut t = t0;
-    let mut y = y0;
-
-    let mut stopping_flag = false;
-
-    let start = Instant::now();
-
-    while !stopping_flag {
-        solver.step(&mut y, &mut t);
-        solution.push(&y, &t);
-
-        stopping_flag = !(t < final_t)
-    }
-
-    let end = Instant::now();
-    let duration = end.duration_since(start).as_secs_f64();
-    solution.duration_s = Some(duration);
-
-    solution
 }
