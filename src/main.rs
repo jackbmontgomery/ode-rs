@@ -1,7 +1,6 @@
 use nalgebra::SVector;
 use ode_rs::numerical_methods::RungeKutta4;
-use ode_rs::ode::{ODE, ODESolution, ODESolver, solve_ode};
-use rayon::prelude::*;
+use ode_rs::ode::{ODE, ODESolver, solve_ivp_batch};
 
 struct Lorenz {
     sigma: f64,
@@ -18,49 +17,28 @@ impl ODE<f64, SVector<f64, 3>> for Lorenz {
 }
 
 fn main() {
-    let initial_conditions: Vec<SVector<f64, 3>> = vec![
+    let y0s: Vec<SVector<f64, 3>> = vec![
         SVector::<f64, 3>::new(10.0, 10.0, 10.0),
         SVector::<f64, 3>::new(10.1, 10.0, 10.0),
         SVector::<f64, 3>::new(10.0, 10.1, 10.0),
     ];
-    // let y0 = SVector::<f64, 3>::new(10.0, 10.0, 10.0);
-    // let t0 = 0.0;
-    // let t_final = 100.0;
-    // let dt = 0.01;
-    //
-    // let ode = Lorenz {
-    //     sigma: 10.,
-    //     beta: 8. / 3.,
-    //     rho: 28.,
-    // };
-    //
-    // let solver = RungeKutta4::new(ode, dt);
-    //
-    // let solution = solve(y0, t0, t_final, solver);
-    //
-    // println!("{:?}", solution.get_solution_duration());
-    //
 
-    let result: Vec<ODESolution<f64, SVector<f64, 3>>> = initial_conditions
-        .into_par_iter()
-        .map(|y0| {
-            println!("{:?}", y0);
-            let t0 = 0.0;
-            let t_final = 1.0;
-            let dt = 0.01;
+    let t0 = 0.0;
+    let tf = 100.0;
+    let dt = 0.01;
 
-            let ode = Lorenz {
-                sigma: 10.,
-                beta: 8. / 3.,
-                rho: 28.,
-            };
+    let ode = Lorenz {
+        sigma: 10.,
+        beta: 8. / 3.,
+        rho: 28.,
+    };
 
-            let solver = RungeKutta4::new(ode, dt);
+    let solver = RungeKutta4::new(&ode, t0, tf, dt);
 
-            solve_ode(y0, t0, t_final, solver)
-        })
-        .collect();
+    let solutions = solve_ivp_batch(y0s, solver);
 
-    println!("{:?}", result);
-    // println!("{result:?}");
+    for (i, solution) in solutions.iter().enumerate() {
+        let filename = format!("./plotting/solution_{}.csv", i);
+        let _ = solution.write_to_csv(&filename);
+    }
 }

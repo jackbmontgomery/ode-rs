@@ -24,6 +24,8 @@ pub trait State<T>:
     Clone
     + Copy
     + Debug
+    + Send
+    + Sync
     + Display
     + Add<Output = Self>
     + Sub<Output = Self>

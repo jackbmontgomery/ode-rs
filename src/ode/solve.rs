@@ -1,15 +1,19 @@
 use crate::ode::{ODE, ODESolution, ODESolver};
 use crate::state::{Real, State};
-use std::time::Instant;
+use rayon::prelude::*;
 
-pub fn solve_ode<T, V, O, S>(y0: V, t0: f64, final_t: f64, mut solver: S) -> ODESolution<T, V>
+pub fn solve_ivp<'a, T, V, O, S>(y0: V, mut solver: S) -> ODESolution<T, V>
 where
     T: Real,
     V: State<T>,
     O: ODE<T, V>,
-    S: ODESolver<T, V, O>,
+    S: ODESolver<'a, T, V, O>,
 {
     let mut solution = ODESolution::new();
+
+    let t0 = solver.get_t0();
+    let tf = solver.get_tf();
+
     solution.push(&y0, &t0);
 
     let mut t = t0;
@@ -17,18 +21,30 @@ where
 
     let mut stopping_flag = false;
 
-    let start = Instant::now();
-
     while !stopping_flag {
         solver.step(&mut y, &mut t);
         solution.push(&y, &t);
 
-        stopping_flag = !(t < final_t)
+        stopping_flag = !(t < tf)
     }
 
-    let end = Instant::now();
-    let duration = end.duration_since(start).as_secs_f64();
-    solution.duration_s = Some(duration);
-
     solution
+}
+
+pub fn solve_ivp_batch<'a, T, V, O, S>(y0s: Vec<V>, solver: S) -> Vec<ODESolution<T, V>>
+where
+    T: Real,
+    V: State<T>,
+    O: ODE<T, V>,
+    S: ODESolver<'a, T, V, O> + Send + Sync,
+{
+    let solutions: Vec<ODESolution<T, V>> = y0s
+        .into_par_iter()
+        .map(move |y0| {
+            let _solver = solver.clone_solver();
+            solve_ivp(y0, _solver)
+        })
+        .collect();
+
+    solutions
 }

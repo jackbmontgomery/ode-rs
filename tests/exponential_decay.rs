@@ -1,5 +1,5 @@
 use ode_rs::numerical_methods::RungeKutta4;
-use ode_rs::ode::{ODE, ODESolver, solve_ode};
+use ode_rs::ode::{ODE, ODESolver, solve_ivp};
 
 struct ExponentialDecay {
     lambda: f64,
@@ -16,14 +16,14 @@ fn test_runge_kutta_4() {
     let lambda = 0.5;
     let y0 = 2.0;
     let t0 = 0.0;
-    let t_final = 4.0;
+    let tf = 4.0;
     let dt = 0.01;
 
     let ode = ExponentialDecay { lambda };
 
-    let solver = RungeKutta4::new(ode, dt);
+    let solver = RungeKutta4::new(&ode, t0, tf, dt);
 
-    let solution = solve_ode(y0, t0, t_final, solver);
+    let solution = solve_ivp(y0, solver);
 
     let test_times = [1.0, 2.0, 3.0, 4.0];
 
