@@ -12,7 +12,7 @@ where
     fn rhs(&self, y: &V, t: f64, dydt: &mut V);
 }
 
-pub trait ODESolver<'a, T, V, O>
+pub trait ODESolver_<'a, T, V, O>
 where
     T: Real,
     V: State<T>,
@@ -20,7 +20,7 @@ where
 {
     fn new(ode: &'a O, t0: f64, tf: f64, dt: f64) -> Self;
     fn step(&mut self, y: &mut V, t: &mut f64);
-    fn clone_solver(&self) -> Self;
+    fn clone(&self) -> Self;
     fn get_t0(&self) -> f64;
     fn get_tf(&self) -> f64;
 }
@@ -29,7 +29,7 @@ where
 pub struct ODESolution<T, V>
 where
     T: Real,
-    V: State<T> + Debug,
+    V: State<T>,
 {
     pub y: Vec<V>,
     pub t: Vec<f64>,

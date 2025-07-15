@@ -1,6 +1,6 @@
 use nalgebra::SVector;
 use ode_rs::numerical_methods::RungeKutta4;
-use ode_rs::ode::{ODE, ODESolver, solve_ivp_batch};
+use ode_rs::ode::{ODE, ODESolver_, solve_ivp_batch};
 
 struct Lorenz {
     sigma: f64,
@@ -21,10 +21,11 @@ fn main() {
         SVector::<f64, 3>::new(10.0, 10.0, 10.0),
         SVector::<f64, 3>::new(10.1, 10.0, 10.0),
         SVector::<f64, 3>::new(10.0, 10.1, 10.0),
+        SVector::<f64, 3>::new(10.0, 10., 10.0),
     ];
 
-    let t0 = 0.0;
-    let tf = 100.0;
+    let t0 = 0.01;
+    let tf = 100_000.0;
     let dt = 0.01;
 
     let ode = Lorenz {
@@ -35,10 +36,5 @@ fn main() {
 
     let solver = RungeKutta4::new(&ode, t0, tf, dt);
 
-    let solutions = solve_ivp_batch(y0s, solver);
-
-    for (i, solution) in solutions.iter().enumerate() {
-        let filename = format!("./plotting/solution_{}.csv", i);
-        let _ = solution.write_to_csv(&filename);
-    }
+    let _ = solve_ivp_batch(y0s.clone(), solver);
 }

@@ -1,4 +1,4 @@
-use crate::ode::{ODE, ODESolver};
+use crate::ode::{ODE, ODESolver_};
 use crate::state::{Real, State};
 use std::marker::PhantomData;
 
@@ -20,13 +20,13 @@ where
     _phantom: PhantomData<T>,
 }
 
-impl<'a, T, V, O> ODESolver<'a, T, V, O> for RungeKutta4<'a, T, V, O>
+impl<'a, T, V, O> ODESolver_<'a, T, V, O> for RungeKutta4<'a, T, V, O>
 where
     T: Real,
     V: State<T>,
     O: ODE<T, V>,
 {
-    fn new(ode: &'a O, t0: f64, tf: f64, dt: f64) -> Self {
+    fn init(ode: &'a O, t0: f64, tf: f64, dt: f64) -> Self {
         RungeKutta4 {
             k1: V::zeros(),
             k2: V::zeros(),
@@ -48,25 +48,21 @@ where
         let two_t = T::from_f64(2.).unwrap();
 
         self.ode.rhs(y, *t, &mut self.k1);
-        // println!("{:?}", self.k1);
 
         self.y_temp = *y + self.k1 * dt_t * half_t;
         self.ode.rhs(&self.y_temp, *t + self.dt / 2., &mut self.k2);
-        // println!("{:?}", self.k2);
 
         self.y_temp = *y + self.k2 * dt_t * half_t;
         self.ode.rhs(&self.y_temp, *t + self.dt / 2., &mut self.k3);
-        // println!("{:?}", self.k3);
 
         self.y_temp = *y + self.k3 * dt_t;
         self.ode.rhs(&self.y_temp, *t + self.dt, &mut self.k4);
-        // println!("{:?}", self.k4);
 
         *y += (self.k1 + self.k2 * two_t + self.k3 * two_t + self.k4) * dt_t * sixth_t;
         *t += self.dt;
     }
 
-    fn clone_solver(&self) -> Self {
+    fn clone(&self) -> Self {
         RungeKutta4 {
             k1: V::zeros(),
             k2: V::zeros(),

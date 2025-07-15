@@ -1,4 +1,4 @@
-use crate::ode::{ODE, ODESolution, ODESolver};
+use crate::ode::{ODE, ODESolution, ODESolver_};
 use crate::state::{Real, State};
 use rayon::prelude::*;
 
@@ -7,7 +7,7 @@ where
     T: Real,
     V: State<T>,
     O: ODE<T, V>,
-    S: ODESolver<'a, T, V, O>,
+    S: ODESolver_<'a, T, V, O>,
 {
     let mut solution = ODESolution::new();
 
@@ -36,13 +36,13 @@ where
     T: Real,
     V: State<T>,
     O: ODE<T, V>,
-    S: ODESolver<'a, T, V, O> + Send + Sync,
+    S: ODESolver_<'a, T, V, O> + Send + Sync,
 {
     let solutions: Vec<ODESolution<T, V>> = y0s
         .into_par_iter()
         .map(move |y0| {
-            let _solver = solver.clone_solver();
-            solve_ivp(y0, _solver)
+            let cloned_solver = solver.clone();
+            solve_ivp(y0, cloned_solver)
         })
         .collect();
 

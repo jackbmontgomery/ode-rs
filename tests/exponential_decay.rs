@@ -1,5 +1,5 @@
 use ode_rs::numerical_methods::RungeKutta4;
-use ode_rs::ode::{ODE, ODESolver, solve_ivp};
+use ode_rs::ode::{ODE, ODESolver_, solve_ivp};
 
 struct ExponentialDecay {
     lambda: f64,
